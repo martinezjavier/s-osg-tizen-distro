@@ -1,0 +1,10 @@
+Tizen images:
+
+  tizen-core-image-minimal
+  tizen-common-core-image-crosswalk
+  tizen-common-core-image-crosswalk-dev
+  tizen-common-core-image-minimal
+  tizen-common-core-image-minimal-dev
+
+You can also run generated qemu images with a command like 'runqemu qemux86'
+
