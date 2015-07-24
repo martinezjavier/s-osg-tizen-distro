@@ -5,6 +5,9 @@ LICENSE = "GPLv2+ & LGPLv2.1+"
 # libid3tag
 DEPENDS += "gstreamer1.0-plugins-base zlib bzip2 libcap"
 
+# libv4l2
+DEPENDS += "libv4l"
+
 inherit gettext
 
 
@@ -39,7 +42,7 @@ PACKAGECONFIG[wavpack]    = "--enable-wavpack,--disable-wavpack,wavpack"
 EXTRA_OECONF += " \
     --enable-oss \
     --enable-gst_v4l2 \
-    --without-libv4l2 \
+    --with-libv4l2 \
     --disable-directsound \
     --disable-waveform \
     --disable-oss4 \
