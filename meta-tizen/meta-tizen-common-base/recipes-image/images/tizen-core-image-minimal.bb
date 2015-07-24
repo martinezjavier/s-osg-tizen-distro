@@ -65,6 +65,9 @@ CORE_IMAGE_BASE_INSTALL += "gstreamer1.0-plugins-ugly-meta"
 CORE_IMAGE_BASE_INSTALL += "gstreamer1.0-plugins-bad-meta"
 CORE_IMAGE_BASE_INSTALL += "gstreamer1.0-libav"
 
+# Package management
+CORE_IMAGE_BASE_INSTALL += "python-smartpm"
+
 export SYSROOT = "${IMAGE_ROOTFS}"
 
 # Set root password to "root"
