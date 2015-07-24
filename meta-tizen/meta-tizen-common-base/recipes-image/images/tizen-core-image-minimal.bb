@@ -64,6 +64,7 @@ CORE_IMAGE_BASE_INSTALL += "gstreamer1.0-plugins-base-meta"
 CORE_IMAGE_BASE_INSTALL += "gstreamer1.0-plugins-ugly-meta"
 CORE_IMAGE_BASE_INSTALL += "gstreamer1.0-plugins-bad-meta"
 CORE_IMAGE_BASE_INSTALL += "gstreamer1.0-libav"
+CORE_IMAGE_BASE_INSTALL += "v4l-utils"
 
 # Package management
 CORE_IMAGE_BASE_INSTALL += "python-smartpm"

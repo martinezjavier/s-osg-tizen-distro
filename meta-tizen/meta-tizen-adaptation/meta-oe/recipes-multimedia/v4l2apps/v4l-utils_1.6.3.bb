@@ -13,8 +13,8 @@ PROVIDES = "libv4l"
 
 SRC_URI = "http://linuxtv.org/downloads/v4l-utils/v4l-utils-${PV}.tar.bz2"
 
-SRC_URI[md5sum] = "921dab41b8d950fb7d1412e39f48703e"
-SRC_URI[sha256sum] = "6054d3120c67a1524993e699b3b02036c817bb000b742c332682163966dc7605"
+SRC_URI[md5sum] = "307858616be6374f63bf946307f15a7f"
+SRC_URI[sha256sum] = "164abf5c1befcd27e8e6ef824a82d4015bdfb5d99ae82daa00e77d895ff9864c"
 
 EXTRA_OECONF = "--disable-qv4l2 --enable-shared --with-udevdir=${base_libdir}/udev"
 
