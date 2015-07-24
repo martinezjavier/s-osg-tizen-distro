@@ -1,0 +1,187 @@
+From cef35c56f6119d03208482a50ccfdb59f364e6bf Mon Sep 17 00:00:00 2001
+From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Date: Mon, 3 Aug 2015 11:41:09 +0200
+Subject: [PATCH 1/1] qv4l2: Add support for Qt5
+
+Depending on the distro, Qt4 may not be available. So, backport
+Qt5 support from devel tree.
+
+That should allow using the Yocto meta-qt5 layer.
+
+Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+---
+ configure.ac                   | 53 +++++++++++++++++++++++++++++++-----------
+ utils/qv4l2/capture-win-qt.cpp |  4 ++++
+ utils/qv4l2/general-tab.cpp    |  2 +-
+ utils/qv4l2/qv4l2.cpp          | 10 ++++----
+ utils/qv4l2/qv4l2.pro          |  2 ++
+ 5 files changed, 52 insertions(+), 19 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 069913d4003c..34aacda70b85 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -126,29 +126,56 @@ AS_IF([test "x$with_jpeg" != xno],
+ 
+ AM_CONDITIONAL([HAVE_JPEG], [$have_jpeg])
+ 
+-PKG_CHECK_MODULES(QT, [QtCore >= 4.4 QtGui >= 4.4], [qt_pkgconfig=true], [qt_pkgconfig=false])
++PKG_CHECK_MODULES(QT5, [Qt5Core >= 5.0 Qt5Gui >= 5.0 Qt5Widgets >= 5.0], [qt_pkgconfig=true], [qt_pkgconfig=false])
+ if test "x$qt_pkgconfig" = "xtrue"; then
++   QT_CFLAGS="$QT5_CFLAGS -fPIC"
++   QT_LIBS="$QT5_LIBS"
+    AC_SUBST(QT_CFLAGS)
+    AC_SUBST(QT_LIBS)
+-   MOC=`$PKG_CONFIG --variable=moc_location QtCore`
+-   UIC=`$PKG_CONFIG --variable=uic_location QtCore`
+-   RCC=`$PKG_CONFIG --variable=rcc_location QtCore`
+-   if test -z "$RCC"; then
+-      RCC="rcc"
++   if test "x${QT_PATH}" == "x"; then
++      QT_PATH=`$PKG_CONFIG --variable=host_bins Qt5Core`
++   fi
++   if test "x${QT_PATH}" != "x"; then
++      UIC=${QT_PATH}/uic
++      MOC=${QT_PATH}/moc
++      RCC=${QT_PATH}/rcc
+    fi
+    AC_SUBST(MOC)
+    AC_SUBST(UIC)
+    AC_SUBST(RCC)
++   PKG_CHECK_MODULES(QT5GL, [Qt5OpenGL >= 5.0 gl], [qt_pkgconfig_gl=BROKEN], [qt_pkgconfig_gl=false])
++   if test "x$qt_pkgconfig_gl" = "xtrue"; then
++      QTGL_CFLAGS="$QT5GL_CFLAGS -fPIC"
++      QTGL_LIBS="$QT5GL_LIBS"
++      AC_SUBST(QTGL_CFLAGS)
++      AC_SUBST(QTGL_LIBS)
++      AC_DEFINE([HAVE_QTGL], [1], [qt has opengl support])
++   else
++      AC_MSG_WARN(Qt5 OpenGL is not available)
++   fi
+ else
+-   AC_MSG_WARN(Qt4 or higher is not available)
++   PKG_CHECK_MODULES(QT, [QtCore >= 4.0 QtGui >= 4.0], [qt_pkgconfig=true], [qt_pkgconfig=false])
++   if test "x$qt_pkgconfig" = "xtrue"; then
++      MOC=`$PKG_CONFIG --variable=moc_location QtCore`
++      UIC=`$PKG_CONFIG --variable=uic_location QtCore`
++      RCC=`$PKG_CONFIG --variable=rcc_location QtCore`
++      if test -z "$RCC"; then
++         RCC="rcc"
++      fi
++      AC_SUBST(MOC)
++      AC_SUBST(UIC)
++      AC_SUBST(RCC)
++      PKG_CHECK_MODULES(QTGL, [QtOpenGL >= 4.8 gl], [qt_pkgconfig_gl=true], [qt_pkgconfig_gl=false])
++      if test "x$qt_pkgconfig_gl" = "xtrue"; then
++         AC_DEFINE([HAVE_QTGL], [1], [qt has opengl support])
++      else
++         AC_MSG_WARN(Qt4 OpenGL is not available)
++      fi
++   else
++      AC_MSG_WARN(Qt4 or higher is not available)
++   fi
+ fi
+ 
+-PKG_CHECK_MODULES(QTGL, [QtOpenGL >= 4.4 gl], [qt_pkgconfig_gl=true], [qt_pkgconfig_gl=false])
+-if test "x$qt_pkgconfig_gl" = "xtrue"; then
+-   AC_DEFINE([HAVE_QTGL], [1], [qt has opengl support])
+-else
+-   AC_MSG_WARN(Qt4 OpenGL or higher is not available)
+-fi
+ 
+ PKG_CHECK_MODULES(ALSA, [alsa], [alsa_pkgconfig=true], [alsa_pkgconfig=false])
+ if test "x$alsa_pkgconfig" = "xtrue"; then
+diff --git a/utils/qv4l2/capture-win-qt.cpp b/utils/qv4l2/capture-win-qt.cpp
+index db85cd28de57..9c849a0ca388 100644
+--- a/utils/qv4l2/capture-win-qt.cpp
++++ b/utils/qv4l2/capture-win-qt.cpp
+@@ -117,7 +117,11 @@ void CaptureWinQt::paintFrame()
+ void CaptureWinQt::stop()
+ {
+ 	if (m_data != NULL)
++#if QT_VERSION >= 0x050000
++		memcpy(m_image->bits(), m_data, m_image->byteCount());
++#else
+ 		memcpy(m_image->bits(), m_data, m_image->numBytes());
++#endif
+ 	m_data = NULL;
+ }
+ 
+diff --git a/utils/qv4l2/general-tab.cpp b/utils/qv4l2/general-tab.cpp
+index 59995413c015..0000de5d868a 100644
+--- a/utils/qv4l2/general-tab.cpp
++++ b/utils/qv4l2/general-tab.cpp
+@@ -2266,7 +2266,7 @@ int GeneralTab::matchAudioDevice()
+ 
+ 	media = discover_media_devices();
+ 
+-	if ((match = checkMatchAudioDevice(media, curDev.toAscii(), MEDIA_SND_CAP)) != -1)
++	if ((match = checkMatchAudioDevice(media, curDev.toLatin1(), MEDIA_SND_CAP)) != -1)
+ 		return match;
+ 	return -1;
+ }
+diff --git a/utils/qv4l2/qv4l2.cpp b/utils/qv4l2/qv4l2.cpp
+index e59056c27e83..e5314791032f 100644
+--- a/utils/qv4l2/qv4l2.cpp
++++ b/utils/qv4l2/qv4l2.cpp
+@@ -1053,7 +1053,7 @@ void ApplicationWindow::startAudio()
+ 	QString audOut = m_genTab->getAudioOutDevice();
+ 
+ 	if (audIn != NULL && audOut != NULL && audIn.compare("None") && audIn.compare(audOut) != 0) {
+-		alsa_thread_startup(audOut.toAscii().data(), audIn.toAscii().data(),
++		alsa_thread_startup(audOut.toLatin1().data(), audIn.toLatin1().data(),
+ 				    m_genTab->getAudioDeviceBufferSize(), NULL, 0);
+ 
+ 		if (m_genTab->isRadio())
+@@ -1523,7 +1523,7 @@ void ApplicationWindow::error(const QString &error)
+ {
+ 	statusBar()->showMessage(error, 20000);
+ 	if (!error.isEmpty())
+-		fprintf(stderr, "%s\n", error.toAscii().data());
++		fprintf(stderr, "%s\n", error.toLatin1().data());
+ }
+ 
+ void ApplicationWindow::error(int err)
+@@ -1598,7 +1598,7 @@ static bool processShortOption(const QStringList &args, int &i, QString &dev)
+ 		return false;
+ 	if (args[i].length() == 2) {
+ 		if (i + 1 >= args.size()) {
+-			usageError(args[i].toAscii());
++			usageError(args[i].toLatin1());
+ 			return false;
+ 		}
+ 		dev = args[++i];
+@@ -1621,7 +1621,7 @@ static bool processLongOption(const QStringList &args, int &i, QString &dev)
+ 		return true;
+ 	}
+ 	if (i + 1 >= args.size()) {
+-		usageError(args[i].toAscii());
++		usageError(args[i].toLatin1());
+ 		return false;
+ 	}
+ 	dev = args[++i];
+@@ -1675,7 +1675,7 @@ int main(int argc, char **argv)
+ 		} else if (args[i] == "-R" || args[i] == "--raw") {
+ 			raw = true;
+ 		} else {
+-			printf("Invalid argument %s\n", args[i].toAscii().data());
++			printf("Invalid argument %s\n", args[i].toLatin1().data());
+ 			return 0;
+ 		}
+ 	}
+diff --git a/utils/qv4l2/qv4l2.pro b/utils/qv4l2/qv4l2.pro
+index 7ab39cc35f84..e50694d40f86 100644
+--- a/utils/qv4l2/qv4l2.pro
++++ b/utils/qv4l2/qv4l2.pro
+@@ -6,6 +6,8 @@ TEMPLATE = app
+ INCLUDEPATH += . ../libv4l2util ../../lib/include ../../include
+ CONFIG += debug
+ 
++greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
++
+ # Input
+ HEADERS += qv4l2.h general-tab.h capture-win.h
+ SOURCES += qv4l2.cpp general-tab.cpp ctrl-tab.cpp capture-win.cpp
+-- 
+2.4.3
+
