@@ -17,6 +17,16 @@ DEPENDS += " tar-replacement-native "
 CORE_IMAGE_BASE_INSTALL += "connman"
 CORE_IMAGE_BASE_INSTALL += "${WESTONSTARTUP}"
 
+# QT and QT wayland support
+CORE_IMAGE_BASE_INSTALL += "qtbase"
+CORE_IMAGE_BASE_INSTALL += "qtbase-fonts"
+CORE_IMAGE_BASE_INSTALL += "qtbase-fonts-ttf-dejavu"
+CORE_IMAGE_BASE_INSTALL += "qtbase-plugins"
+CORE_IMAGE_BASE_INSTALL += "qtwayland"
+CORE_IMAGE_BASE_INSTALL += "qtwayland-plugins"
+CORE_IMAGE_BASE_INSTALL += "qtwayland-examples"
+CORE_IMAGE_BASE_INSTALL += "qtwayland-tools"
+
 # Profile specific configuration - default is Tizen common
 CORE_IMAGE_BASE_INSTALL += "${IMAGECONFIG}"
 
